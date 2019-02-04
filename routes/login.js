@@ -12,7 +12,7 @@ function protected(req, res, next) {
   }
 }
 
-router.get("/users", (req, res) => {
+router.get("/users", protected, (req, res) => {
   db("users")
     .select("id", "username")
     .then(users => {
@@ -37,6 +37,37 @@ router.post("/register", (req, res) => {
       res.status(201).json({ newUserId: id });
     })
     .catch(err => res.json(err));
+});
+
+router.post("/login", (req, res) => {
+  // Grab the username and password from body
+  const creds = req.body;
+  db("users")
+    .where({ username: creds.username })
+    .first()
+    .then(user => {
+      if (user && bcrypt.compareSync(creds.password, user.password)) {
+        req.session.username = user.username;
+        // passwords match and the user exists by the username
+        res.status(200).json({ message: "Thank you for signing in!" });
+      } else {
+        // either username or password is invalid
+        res.status(401).json({ message: "Please enter valid information!" });
+      }
+    })
+    .catch(err => res.json(err));
+});
+
+router.get("/logout", (req, res) => {
+  if (req.session) {
+    req.session.destroy(err => {
+      if (err) {
+        res.send("Unable to logout, try again");
+      } else {
+        res.send("You are logged out");
+      }
+    });
+  }
 });
 
 module.exports = router;

@@ -8,6 +8,8 @@ exports.up = function(knex, Promise) {
       .unique();
 
     users.string("password", 128).notNullable();
+
+    users.json("rank");
   });
 };
 
